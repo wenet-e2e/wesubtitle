@@ -133,7 +133,6 @@ def main():
                                        box[0][0]:box[1][0], :]
                 ref_gray_image = cv2.cvtColor(ref_gray_image,
                                               cv2.COLOR_BGR2GRAY)
-                cv2.imwrite('subtitle.jpg', ref_gray_image)
     cap.release()
 
     # Write srt file
