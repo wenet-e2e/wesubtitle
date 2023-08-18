@@ -4,6 +4,13 @@
 例如将字幕数字化、用字幕文本和对应时间段语音做语音识别等等。
 
 
+## 安装
+
+``` sh
+pip install git+https://github.com/wenet-e2e/wesubtitle.git
+```
+
+
 ## 示例
 
 假设你的输入视频为 `input.mp4`，要生成的字幕文件为 `output.srt`，则使用以下命令运行：
@@ -23,13 +30,6 @@ wesubtitle input.mp4 output.srt
 
 如果你没有视频，可以使用以下视频进行测试，
 * 罗翔大熊猫：链接: https://pan.baidu.com/s/17VvHVUqYn8QW4v51emzyRw 提取码: tknf。
-
-
-## 安装
-
-``` sh
-pip install git+https://github.com/wenet-e2e/wesubtitle.git
-```
 
 
 ## 原理
