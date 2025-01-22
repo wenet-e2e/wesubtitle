@@ -69,6 +69,7 @@ def get_args():
                         help='similarity threshold')
     parser.add_argument('input_video', help='input video file')
     parser.add_argument('output_srt', help='output srt file')
+    parser.add_argument('output_txt', help='output txt file')
     args = parser.parse_args()
     return args
 
@@ -140,6 +141,15 @@ def main():
     with open(args.output_srt, 'w', encoding='utf8') as fout:
         fout.write(srt.compose(subs))
 
+    # Write txt file
+    with open(args.output_txt, 'w', encoding='utf8') as fout:
+        for idx in range(len(subs)):
+            # same subtitle occurs once
+            if idx > 0:
+                if subs[idx].content == subs[idx-1].content:
+                    continue
+                    
+            fout.write(subs[idx].content + "\n")
 
 if __name__ == '__main__':
     main()
