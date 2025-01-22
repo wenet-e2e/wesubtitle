@@ -25,26 +25,27 @@ def detect_subtitle_area(ocr_results, h, w):
     # Merge horizon text areas
     idx = 0
     candidates = []
-    while idx < len(ocr_results):
-        boxes, text = ocr_results[idx]
-        # We assume the subtitle is at bottom of the video
-        if boxes[0][1] < h * 0.75:
-            idx += 1
-            continue
-        idx += 1
-        con_boxes = copy.deepcopy(boxes)
-        con_text = text[0]
+    if ocr_results is not None:
         while idx < len(ocr_results):
-            n_boxes, n_text = ocr_results[idx]
-            if abs(n_boxes[0][1] - boxes[0][1]) < h * 0.01 and \
-               abs(n_boxes[3][1] - boxes[3][1]) < h * 0.01:
-                con_boxes[1] = n_boxes[1]
-                con_boxes[2] = n_boxes[2]
-                con_text = con_text + ' ' + n_text[0]
+            boxes, text = ocr_results[idx]
+            # We assume the subtitle is at bottom of the video
+            if boxes[0][1] < h * 0.75:
                 idx += 1
-            else:
-                break
-        candidates.append((con_boxes, con_text))
+                continue
+            idx += 1
+            con_boxes = copy.deepcopy(boxes)
+            con_text = text[0]
+            while idx < len(ocr_results):
+                n_boxes, n_text = ocr_results[idx]
+                if abs(n_boxes[0][1] - boxes[0][1]) < h * 0.01 and \
+                abs(n_boxes[3][1] - boxes[3][1]) < h * 0.01:
+                    con_boxes[1] = n_boxes[1]
+                    con_boxes[2] = n_boxes[2]
+                    con_text = con_text + ' ' + n_text[0]
+                    idx += 1
+                else:
+                    break
+            candidates.append((con_boxes, con_text))
     # TODO(Binbin Zhang): Only support horion center subtitle
     if len(candidates) > 0:
         sub_boxes, subtitle = candidates[-1]
