@@ -25,26 +25,27 @@ def detect_subtitle_area(ocr_results, h, w):
     # Merge horizon text areas
     idx = 0
     candidates = []
-    while idx < len(ocr_results):
-        boxes, text = ocr_results[idx]
-        # We assume the subtitle is at bottom of the video
-        if boxes[0][1] < h * 0.75:
-            idx += 1
-            continue
-        idx += 1
-        con_boxes = copy.deepcopy(boxes)
-        con_text = text[0]
+    if ocr_results is not None:
         while idx < len(ocr_results):
-            n_boxes, n_text = ocr_results[idx]
-            if abs(n_boxes[0][1] - boxes[0][1]) < h * 0.01 and \
-               abs(n_boxes[3][1] - boxes[3][1]) < h * 0.01:
-                con_boxes[1] = n_boxes[1]
-                con_boxes[2] = n_boxes[2]
-                con_text = con_text + ' ' + n_text[0]
+            boxes, text = ocr_results[idx]
+            # We assume the subtitle is at bottom of the video
+            if boxes[0][1] < h * 0.75:
                 idx += 1
-            else:
-                break
-        candidates.append((con_boxes, con_text))
+                continue
+            idx += 1
+            con_boxes = copy.deepcopy(boxes)
+            con_text = text[0]
+            while idx < len(ocr_results):
+                n_boxes, n_text = ocr_results[idx]
+                if abs(n_boxes[0][1] - boxes[0][1]) < h * 0.01 and \
+                abs(n_boxes[3][1] - boxes[3][1]) < h * 0.01:
+                    con_boxes[1] = n_boxes[1]
+                    con_boxes[2] = n_boxes[2]
+                    con_text = con_text + ' ' + n_text[0]
+                    idx += 1
+                else:
+                    break
+            candidates.append((con_boxes, con_text))
     # TODO(Binbin Zhang): Only support horion center subtitle
     if len(candidates) > 0:
         sub_boxes, subtitle = candidates[-1]
@@ -68,6 +69,7 @@ def get_args():
                         help='similarity threshold')
     parser.add_argument('input_video', help='input video file')
     parser.add_argument('output_srt', help='output srt file')
+    parser.add_argument('output_txt', help='output txt file')
     args = parser.parse_args()
     return args
 
@@ -139,6 +141,15 @@ def main():
     with open(args.output_srt, 'w', encoding='utf8') as fout:
         fout.write(srt.compose(subs))
 
+    # Write txt file
+    with open(args.output_txt, 'w', encoding='utf8') as fout:
+        for idx in range(len(subs)):
+            # same subtitle occurs once
+            if idx > 0:
+                if subs[idx].content == subs[idx-1].content:
+                    continue
+                    
+            fout.write(subs[idx].content + "\n")
 
 if __name__ == '__main__':
     main()
