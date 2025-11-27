@@ -1,4 +1,6 @@
-paddlepaddle
-paddleocr>=2.0.1
-opencv-python
-srt
+paddlex==3.3.10
+paddleocr==3.3.2
+paddlepaddle==3.2.2
+opencv-python==4.12.0.88
+scikit-image==0.25.2
+srt==3.5.3
