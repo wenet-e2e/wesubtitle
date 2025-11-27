@@ -1,6 +1,7 @@
 import argparse
 import copy
 import datetime
+import math
 
 import cv2
 from paddleocr import PaddleOCR
@@ -57,7 +58,7 @@ def detect_subtitle_area(ocr_results, h, w):
         screen_center_x = w / 2
         # 检查字幕区域偏离中心位置不超过 20%
         offset_ratio = abs(subtitle_center_x - screen_center_x) / w
-        if offset_ratio <= 0.20:
+        if offset_ratio <= 0.20 and len(subtitle) >= 2:  # 字幕长度至少为2个字符
             return True, box2int(sub_boxes), subtitle
     return False, None, None
 
@@ -72,7 +73,7 @@ def get_args():
     parser.add_argument('-t',
                         '--similarity_thresh',
                         type=float,
-                        default=0.8,
+                        default=0.6,
                         help='similarity threshold')
     parser.add_argument(
         '-m',
@@ -81,6 +82,12 @@ def get_args():
         default=10.0,
         help=
         'maximum duration (in seconds) for the same subtitle, force re-detection if exceeded'
+    )
+    parser.add_argument(
+        '--min_duration',
+        type=float,
+        default=0.1,
+        help='minimum duration (in seconds) for subtitle, discard if shorter than this value'
     )
     parser.add_argument('--model_type',
                         choices=['server', 'mobile'],
@@ -107,7 +114,7 @@ def main():
     w = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
     h = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
     count = cap.get(cv2.CAP_PROP_FRAME_COUNT)
-    fps = cap.get(cv2.CAP_PROP_FPS)
+    fps = math.ceil(cap.get(cv2.CAP_PROP_FPS))
     print('Video info w: {}, h: {}, count: {}, fps: {}'.format(
         w, h, count, fps))
 
@@ -120,6 +127,12 @@ def main():
     subs = []
 
     def _add_subs(end):
+        duration = (end - start) / fps
+        # 检查时长是否小于最小值，如果小于则丢弃
+        if duration < args.min_duration:
+            print('Discard subtitle (duration {}s < min {}s): {}'.format(
+                duration, args.min_duration, content))
+            return
         print('New subtitle {} {} {}'.format(start / fps, end / fps, content))
         subs.append(
             srt.Subtitle(
