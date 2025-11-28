@@ -31,10 +31,6 @@ def detect_subtitle_area(ocr_results, h, w):
     num_boxes = len(boxes)
     while idx < num_boxes:
         box, text = boxes[idx], texts[idx]
-        # We assume the subtitle is at bottom of the video
-        if box[0][1] < h * 0.75:
-            idx += 1
-            continue
         idx += 1
         con_box = copy.deepcopy(box)
         con_text = text
@@ -56,9 +52,13 @@ def detect_subtitle_area(ocr_results, h, w):
         subtitle_center_x = (sub_boxes[0][0] + sub_boxes[1][0]) / 2
         # 计算屏幕中心 x 坐标
         screen_center_x = w / 2
-        # 检查字幕区域偏离中心位置不超过 20%
+        # 计算字幕区域的宽度和高度
+        subtitle_width = abs(sub_boxes[1][0] - sub_boxes[0][0])
+        subtitle_height = abs(sub_boxes[3][1] - sub_boxes[0][1])
+        # 检查字幕区域偏离中心位置不超过 20%，宽度和高度都大于7，且字幕长度至少为2个字符
         offset_ratio = abs(subtitle_center_x - screen_center_x) / w
-        if offset_ratio <= 0.20 and len(subtitle) >= 2:  # 字幕长度至少为2个字符
+        if offset_ratio <= 0.20 and len(
+                subtitle) >= 2 and subtitle_width > 7 and subtitle_height > 7:
             return True, box2int(sub_boxes), subtitle
     return False, None, None
 
@@ -87,15 +87,20 @@ def get_args():
         '--min_duration',
         type=float,
         default=0.1,
-        help='minimum duration (in seconds) for subtitle, discard if shorter than this value'
+        help=
+        'minimum duration (in seconds) for subtitle, discard if shorter than this value'
     )
-    parser.add_argument('--model_type',
-                        choices=['server', 'mobile'],
-                        default='mobile',
-                        help='OCR model type: server or mobile (default: mobile)')
+    parser.add_argument(
+        '--model_type',
+        choices=['server', 'mobile'],
+        default='mobile',
+        help='OCR model type: server or mobile (default: mobile)')
     parser.add_argument('input_video', help='input video file')
     parser.add_argument('output_srt', help='output srt file')
-    parser.add_argument('output_txt', nargs='?', default=None, help='output txt file (optional)')
+    parser.add_argument('output_txt',
+                        nargs='?',
+                        default=None,
+                        help='output txt file (optional)')
     args = parser.parse_args()
     return args
 
@@ -172,8 +177,17 @@ def main():
                 _add_subs(cur - args.subsampling)
                 detected = False
         else:
-            # Detect subtitle area
-            ocr_results = ocr.ocr(frame)
+            # Detect subtitle area - 只处理图像的下1/4部分以提升速度
+            bottom_start = int(h * 3 / 4)
+            bottom_frame = frame[bottom_start:, :]
+            ocr_results = ocr.ocr(bottom_frame)
+            # 将OCR结果的y坐标转换回原始图像坐标
+            if ocr_results and len(ocr_results) > 0 and ocr_results[0]:
+                result = ocr_results[0]
+                if 'rec_polys' in result:
+                    for box in result['rec_polys']:
+                        for point in box:
+                            point[1] += bottom_start
             detected, box, content = detect_subtitle_area(ocr_results, h, w)
             if detected:
                 start = cur
