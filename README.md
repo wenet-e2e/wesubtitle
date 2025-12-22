@@ -39,3 +39,8 @@ wesubtitle input.mp4 output.srt
 
 
 ## 常见问题
+
+1. GPU 运行
+``` sh
+pip install paddlepaddle-gpu==3.2.0
+```
