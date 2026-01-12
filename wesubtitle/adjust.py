@@ -352,7 +352,7 @@ def get_args():
                         help='max gap duration between segments to merge')
     parser.add_argument('--speaker_thresh',
                         type=float,
-                        default=0.68,
+                        default=0.60,
                         help='similarity threshold for same speaker')
 
     parser.add_argument('--max_same_text_duration',
